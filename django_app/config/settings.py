@@ -30,10 +30,6 @@ ALLOWED_HOSTS = []
 # Authentication
 AUTH_USER_MODEL = 'member.User'
 
-CORS_ORIGIN_WHITELIST = (
-    'localhost:3000',
-)
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -132,3 +128,15 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
 
 STATIC_URL = '/static/'
+
+
+CORS_ORIGIN_WHITELIST = (
+    'localhost:3000',
+)
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.BasicAuthentication',
+        'rest_framework.authentication.TokenAuthentication',
+    )
+}

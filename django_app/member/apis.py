@@ -1,16 +1,44 @@
 import requests
 from django.contrib.auth import get_user_model
+from rest_framework import permissions
 from rest_framework.authtoken.models import Token
 from rest_framework.exceptions import APIException
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from .serializers import UserSerializer
+
 User = get_user_model()
 
 
+class TokenUserInfoAPIView(APIView):
+    def post(self, request):
+        token_string = request.data.get('token')
+        try:
+            token = Token.objects.get(key=token_string)
+        except Token.DoesNotExist:
+            raise APIException('token invalid')
+        user = token.key
+        # ret = {
+        #     'pk': user.pk,
+        #     'username': user.username,
+        #     'first_name': user.first_name,
+        #     'last_name': user.last_name,
+        # }
+        # return Response(ret)
+        return Response(UserSerializer(user).data)
+
+
+class UserDetailView(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def post(self, request, pk=None):
+        return Response(UserSerializer(request.user).data)
+
+
 class FacebookLoginAPIView(APIView):
-    FACEBOOK_APP_ID = '1601998296497280'
-    FACEBOOK_SECRET_CODE = 'e7d66517fdd69f442b95340ac6647b46'
+    FACEBOOK_APP_ID = '####'
+    FACEBOOK_SECRET_CODE = '######'
     APP_ACCESS_TOKEN = '{}|{}'.format(
         FACEBOOK_APP_ID,
         FACEBOOK_SECRET_CODE,
@@ -32,18 +60,19 @@ class FacebookLoginAPIView(APIView):
             user = User.objects.create_facebook_user(user_info)
 
         # DRF token을 생성
-        token, token_created = Token.objects.got_or_create(user=user)
+        token, token_created = Token.objects.get_or_create(user=user)
 
         # 관련정보를 한번에 리턴
         ret = {
             'token': token.key,
-            'user': {
-                'pk': user.pk,
-                'username': user.username,
-                'first_name': user.first_name,
-                'last_name': user.last_name,
-            }
-            # 'user': UserSerializer(user).data,
+            # 'user': {
+            #     'pk': user.pk,
+            #     'username': user.username,
+            #     'first_name': user.first_name,
+            #     'last_name': user.last_name,
+            #     'email': user.email,
+            # }
+            'user': UserSerializer(user).data,
         }
         return Response(ret)
 
